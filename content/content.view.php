@@ -4,13 +4,13 @@
 	require_once(TOOLKIT . '/class.datasourcemanager.php');
 	require_once(TOOLKIT . '/class.datasource.php');
 
-	Class contentExtensionCacheabledatasourceView extends AdministrationPage{
+	Class contentExtensionCacheabledbdatasourceView extends AdministrationPage{
 
 		protected $_cachefiles = array();
 
 		function __construct(&$parent){
 			parent::__construct($parent);
-			$this->setTitle(__('Symphony') .' &ndash; ' . __('Cacheable Data Sources'));
+			$this->setTitle(__('Symphony') .' &ndash; ' . __('Cacheable DB Data Sources'));
 		}
 		
 		// This seems retarded, but it's effiecient
@@ -21,64 +21,71 @@
 		
 		// Build a list of all DS-cache files
 		private function __buildCacheFileList() {
-			if ($this->_cachefiles != null) return $this->_cachefiles;
+			// if ($this->_cachefiles != null) return $this->_cachefiles;
 			
-			if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
-				
-			// Initialise the array outside the loop for speed
-			$matches = array();
+			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
-			while (($file = readdir($oDirHandle)) !== false) {		
-				// Check some initial characters		
-				if ($this->__preliminaryFilenameCheck($file)) continue;
-
-				// Drop it if it's not a match
-				if (!preg_match('/^datasource(?P<name>[A-Za-z_]+)-(?P<hash>[^\.]+).+/', $file, $matches)) continue;
+				// Check some initial characters
+				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot, count(`datasource`) as nb FROM `sym_cachabledbdatasource` group by 1");
 				
-				$last_modified = filemtime(CACHE . '/' . $file);
-				
-				// Insert into the array
-				if (!isset($this->_cachefiles[$matches['name']])) {
-					$this->_cachefiles[$matches['name']] = array(
-						'count' => 1,
-						'size' => filesize(CACHE . '/' . $file),
-						'files' => array(CACHE . '/' . $file),
-						'last-modified' => $last_modified
-					);
+				foreach($caches as $cache){
+					$this->_cachefiles[$cache['datasource']] = array(
+						'count' =>  $cache['nb'],
+						'size' => $cache['size_tot']
+						// 'files' => array($cache['hash']),
+						// 'last-modified' => $row['creation']
+					);	
 				}
-				else {
-					$this->_cachefiles[$matches['name']]['count']++;
-					$this->_cachefiles[$matches['name']]['size'] += filesize(CACHE . '/' . $file);
-					array_push(
-						$this->_cachefiles[$matches['name']]['files'],
-						CACHE . '/' . $file
-					);
-					if($last_modified > $this->_cachefiles[$matches['name']]['last-modified']) {
-						$this->_cachefiles[$matches['name']]['last-modified'] = $last_modified;
-					}
-				}					            
-	        }	 	   	        	        	              
-        
-      	  	closedir($oDirHandle);
       	  	
       	  	return $this->_cachefiles;			
 		}
 		
-		private function __clearCache($handles) {
-			$files = $this->__buildCacheFileList();
-			foreach ($handles as $handle) {
-				if (array_key_exists($handle, $files)) {		
-					foreach($files[$handle]['files'] as $file) {
-						unlink($file);
+		// Build a list of all DS-cache files
+		private function __getCacheFileList($datasource) {
+			// if ($this->_cachefiles != null) return $this->_cachefiles;
+			
+			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
+			
+				// Check some initial characters
+				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_cachabledbdatasource` where `datasource` = '{$datasource}'");
+				$files = null;
+				foreach($caches as $cache){
+					if (!isset($files)) {
+						$files = array($cache['hash']);
 					}
+					else {
+						array_push(	$files,$cache['hash']);
+					}			
+				}
+      	  	
+      	  	return $files;			
+		}
+		
+		private function __clearCache($handles) {
+			foreach ($handles as $handle) {
+				$files = $this->__getCacheFileList($handle);
+				if (isset($files)) {		
+					foreach($files as $file) {
+						// unlink($file);
+						//symphony will automatically clear up expired cache after some time unless this is re-filled
+						//not deleting so if immediately updating symphony will only update instead of re-create row
+						// Symphony::Database()->update(array('expiry'=>time(),'data'=>''), "tbl_cache","`hash`='{$file}'");
+						
+						// just delete as we might have too many rows
+						Symphony::Database()->delete("tbl_cache","`hash`='{$file}'");
+						Symphony::Database()->delete("tbl_cachabledbdatasource","`hash`='{$file}'");
+						// var_dump($file);
+					}
+					// Symphony::Database()->delete("tbl_cachabledbdatasource","`datasource`='{$handle}'");
 				}					
 			}
+			// die;
 		}
 	
 		function view(){
 			
 			$this->setPageType('table');
-			$this->appendSubheading(__('Cacheable Data Sources'));
+			$this->appendSubheading(__('Cacheable DB Data Sources'));
 			
 			$aTableHead = array(
 				array('Data Source', 'col'),
@@ -107,17 +114,24 @@
 				$params = array();
 				
 				foreach($datasources as $ds) {
+						if ($ds['handle'] == 'article_search' || $ds['handle'] == 'keyword_articles') continue;		
+			// var_dump ($ds['handle']);
+					try {
+						$datasource = $dsm->create($ds['handle'], $params);
+					} catch (Exception $e){
+						continue;
+					}
 					
-					$datasource = $dsm->create($ds['handle'], $params);
-					
+			// var_dump ($ds['handle']);
 					$has_files = false;
 					$has_size = false;
 					
 					$name = Widget::TableData($ds['name']);
 					$name->appendChild(Widget::Input("items[{$ds['handle']}]", null, 'checkbox'));
 					
+			// var_dump ($ds['handle']);
 					// if data source is using Cacheable Datasource
-					if ($datasource instanceOf CacheableDatasource){
+					if ($datasource instanceOf CacheableDBDatasource){
 						
 						$lifetime = Widget::TableData($datasource->dsParamCACHE . ' ' . ($datasource->dsParamCACHE == 1 ? __('minute') : __('minutes')));
 						
@@ -145,13 +159,18 @@
 						
 						$last_modified = $cachedata[$ds['handle']]['last-modified'];
 						$expires = Widget::TableData(__('None'), 'inactive');
-						
+											
+			// var_dump ($ds['handle']);
 						if ($last_modified) {
 							$file_age = (int)(floor(time() - $last_modified));
 							$expires_at = $last_modified + ($datasource->dsParamCACHE * 60);
 							$expires_in = (int)(($expires_at - time()) / 60);
 							
-							if ($file_age > ($datasource->dsParamCACHE * 60)) {
+							if ($datasource->dsParamCACHE == -1) {
+								$expires = Widget::TableData('Always Expired');
+							} else if ($datasource->dsParamCACHE == 0) {
+								$expires = Widget::TableData('Never Expires');
+							} else if ($file_age > ($datasource->dsParamCACHE * 60)) {
 								$expires = Widget::TableData('Expired');
 							} else if($expires_in == 0) {
 								$expires = Widget::TableData(__('Cache expires in') . ' ' . ($expires_at - time()) . 's');
@@ -189,7 +208,7 @@
 			$tableActions->appendChild(Widget::Input('action[apply]', __('Apply'), 'submit'));
 			
 			$this->Form->appendChild($tableActions);
-			
+			// var_dump ('done');die;
 		}
 		
 		function __actionIndex(){
