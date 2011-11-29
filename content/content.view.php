@@ -26,7 +26,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot, count(`datasource`) as nb FROM `sym_cachabledbdatasource` group by 1");
+				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot, count(`datasource`) as nb FROM `sym_cacheabledbdatasource` group by 1");
 				
 				foreach($caches as $cache){
 					$this->_cachefiles[$cache['datasource']] = array(
@@ -47,7 +47,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_cachabledbdatasource` where `datasource` = '{$datasource}'");
+				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_cacheabledbdatasource` where `datasource` = '{$datasource}'");
 				$files = null;
 				foreach($caches as $cache){
 					if (!isset($files)) {
@@ -73,10 +73,10 @@
 						
 						// just delete as we might have too many rows
 						Symphony::Database()->delete("tbl_cache","`hash`='{$file}'");
-						Symphony::Database()->delete("tbl_cachabledbdatasource","`hash`='{$file}'");
+						Symphony::Database()->delete("tbl_cacheabledbdatasource","`hash`='{$file}'");
 						// var_dump($file);
 					}
-					// Symphony::Database()->delete("tbl_cachabledbdatasource","`datasource`='{$handle}'");
+					// Symphony::Database()->delete("tbl_cacheabledbdatasource","`datasource`='{$handle}'");
 				}					
 			}
 			// die;
