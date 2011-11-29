@@ -26,12 +26,13 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot, count(`datasource`) as nb FROM `sym_cacheabledbdatasource` group by 1");
+				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `sym_cacheabledbdatasource` group by 1");
 				
 				foreach($caches as $cache){
 					$this->_cachefiles[$cache['datasource']] = array(
 						'count' =>  $cache['nb'],
-						'size' => $cache['size_tot']
+						'size' => $cache['size_tot'],
+						'uncompressedsize' => $cache['uncompressedsize_tot']
 						// 'files' => array($cache['hash']),
 						// 'last-modified' => $row['creation']
 					);	
@@ -92,7 +93,7 @@
 				array('Lifetime', 'col'),
 				array('Cache Files', 'col'),
 				array('Size', 'col'),
-				array('State', 'col'),
+				array('Uncompressed Size', 'col'),
 			);
 			
 			$dsm = new DatasourceManager(Administration::instance());
@@ -157,7 +158,24 @@
 							($has_size ? NULL : 'inactive')
 						);
 						
-						$last_modified = $cachedata[$ds['handle']]['last-modified'];
+						$has_size = isset($cachedata[$ds['handle']]['uncompressedsize']);
+						if ($has_size) {
+							if ($cachedata[$ds['handle']]['uncompressedsize'] < 1024) {
+								$size_str = $cachedata[$ds['handle']]['uncompressedsize'] . "b";
+							} else if ($cachedata[$ds['handle']]['uncompressedsize'] < 1024 * 1024) {
+								$size_str = floor($cachedata[$ds['handle']]['uncompressedsize']/1024) . "kb";
+							} else {
+								$size_str = floor($cachedata[$ds['handle']]['uncompressedsize']/(1024*1024)) . "mb";
+							}
+						} else {
+							$size_str = __('None');
+						}
+						$uncompressedsize = Widget::TableData(
+							$size_str,
+							($has_size ? NULL : 'inactive')
+						);
+						
+					/*	$last_modified = $cachedata[$ds['handle']]['last-modified'];
 						$expires = Widget::TableData(__('None'), 'inactive');
 											
 			// var_dump ($ds['handle']);
@@ -178,9 +196,9 @@
 								$expires = Widget::TableData(__('Cache expires in') . ' ' . $expires_in . ' ' . ($expires_in == 1 ? __('minute') : __('minutes')));
 							}
 							
-						}
+						}*/
 						
-						$aTableBody[] = Widget::TableRow(array($name, $lifetime, $files, $size, $expires));
+						$aTableBody[] = Widget::TableRow(array($name, $lifetime, $files, $size, $uncompressedsize));
 
 					}
 

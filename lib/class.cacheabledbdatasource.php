@@ -242,11 +242,13 @@ Class CacheableDBDatasource extends Datasource {
 				// file_put_contents($filename, $output_params . $contents->generate(true, 1));
 				// $id = $row["id"];
 				// var_dump($row["id"] . ' ' . $row['hash']);die;
-				$data = $this->compressData($output_params . $contents->generate(true, 1));
+				$data = $output_params . $contents->generate(true, 1);
+				$uncompressedsize = strlen($data);
+				$data = $this->compressData($data);
 				// Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'hash'=>$hash,'size'=>$length, 'params'=>serialize($this->dsParamFLUSH), 'section'=>$this->getSource()), 'tbl_cache',true);
 				try{
 					$paramData = $this->storeParams($param_pool);
-					Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'size'=>strlen($data), 'params'=>$paramData, 'section'=>$this->getSource()), 'tbl_cacheabledbdatasource',true);
+					Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'size'=>strlen($data),'uncompressedsize'=>$uncompressedsize, 'params'=>$paramData, 'section'=>$this->getSource()), 'tbl_cacheabledbdatasource',true);
 					// echo 'inserted';die;
 				}catch (Exception $e) {
 					// var_dump(Symphony::Database()->getLastError());die;
