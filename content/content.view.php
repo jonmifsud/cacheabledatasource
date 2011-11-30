@@ -10,7 +10,7 @@
 
 		function __construct(&$parent){
 			parent::__construct($parent);
-			$this->setTitle(__('Symphony') .' &ndash; ' . __('Advanced Cacheable Datasources'));
+			$this->setTitle(__('Symphony') .' &ndash; ' . __('DB Datasource Cache'));
 		}
 		
 		// This seems retarded, but it's effiecient
@@ -86,7 +86,7 @@
 		function view(){
 			
 			$this->setPageType('table');
-			$this->appendSubheading(__('Advanced Cacheable Datasources'));
+			$this->appendSubheading(__('DB Datasource Cache'));
 			
 			$aTableHead = array(
 				array('Data Source', 'col'),
