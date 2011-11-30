@@ -1,9 +1,9 @@
 <?php
 
-	Class Extension_CacheableDBDatasource extends Extension {
+	Class Extension_AdvancedCacheableDatasource extends Extension {
 
 		public function about(){
-			return array('name' => 'Cacheable DB Datasource',
+			return array('name' => 'Advanced Cacheable Datasource',
 						 'version' => '0.2.4',
 						 'release-date' => '2011-11-29',
 						 'author' => array('name' => 'Jon Mifsud',
@@ -16,7 +16,7 @@
 			return array(
 				array(
 					'location'	=> __('System'),
-					'name'	=> __('Cacheable DB Data Sources'),
+					'name'	=> __('Advanced Cacheable Datasource'),
 					'link'	=> '/view/'
 				)
 			);		
@@ -44,7 +44,7 @@
 			$sectionid = $context['section']->get('id');
 			
 			//fetch all cache rows related to this section
-			$rows = Symphony::Database()->fetch("SELECT `id`,`params`,`datasource`,`hash` FROM `tbl_cacheabledbdatasource` WHERE `section`='{$sectionid}'");
+			$rows = Symphony::Database()->fetch("SELECT `id`,`params`,`datasource`,`hash` FROM `tbl_advancedcacheabledatasource` WHERE `section`='{$sectionid}'");
 			$fieldManager= new FieldManager(Symphony::Engine());
 			foreach ($rows as $row){
 				$params = unserialize($row['params']);
@@ -101,11 +101,12 @@
 		 */
 		public function install()	{
 			// Install cacheabledatasource table:
-			Symphony::Database()->query("CREATE TABLE IF NOT EXISTS `tbl_cacheabledbdatasource` (
+			Symphony::Database()->query("CREATE TABLE IF NOT EXISTS `tbl_advancedcacheabledatasource` (
 				`id` INT(11) unsigned NOT NULL AUTO_INCREMENT,
 				`datasource` VARCHAR(100),
 				`section` INT(11) unsigned NOT NULL,
 				`size` INT(11) unsigned NOT NULL,
+				`uncompressedsize` INT(11) unsigned NOT NULL,
 				`params` VARCHAR(511),
 				`hash` VARCHAR(32) UNIQUE NOT NULL,
 				`creation` int(14) NOT NULL DEFAULT '0',
@@ -121,13 +122,13 @@
 		 */
 		public function update()	{
 			// Install cacheabledatasource table:
-			$version = Symphony::ExtensionManager()->fetchInstalledVersion('cacheabledbdatasource');
+			$version = Symphony::ExtensionManager()->fetchInstalledVersion('advancedcacheabledatasource');
 			if (version_compare($version, '0.2.2', '<')){
 				Symphony::Database()->query("TRUNCATE TABLE `tbl_cache`");
 				Symphony::Database()->query("DROP TABLE `tbl_cachabledbdatasource`");
 			} 
 			$this->uninstall(); 
-			Symphony::Database()->query("CREATE TABLE IF NOT EXISTS `tbl_cacheabledbdatasource` (
+			Symphony::Database()->query("CREATE TABLE IF NOT EXISTS `tbl_advancedcacheabledatasource` (
 				`id` INT(11) unsigned NOT NULL AUTO_INCREMENT,
 				`datasource` VARCHAR(100),
 				`section` INT(11) unsigned NOT NULL,
@@ -150,7 +151,7 @@
 		 */
 		public function uninstall()	{
 			//Drop table 
-			Symphony::Database()->query("DROP TABLE `tbl_cacheabledbdatasource`");
+			Symphony::Database()->query("DROP TABLE `tbl_advancedcacheabledatasource`");
 		}
 		
 	}

@@ -1,4 +1,4 @@
-# Cacheable DB Datasource
+# Advanced Cacheable Datasource
 
 * Version: 0.6
 * Author: [Jonathan Mifsud](http://jonmifsud.com)
@@ -19,7 +19,7 @@ Some datasources simply execute a lot of database queries, and if you run a busy
 
 However sometimes neither of these are viable. Perhaps you really *need* all of that data in your XML, or perhaps you have a "Logged in as {user}" notice in the header that means you can't cache the HTML output for all users.
 
-This extension bundles a `CacheableDBDatasource` class from which your data sources can extend.
+This extension bundles a `AdvancedCacheableDatasource` class from which your data sources can extend.
 
 ## How do I use it?
 Install this extension. Actual Installation/Update is required as cache does not activate unless latest version is installed.
@@ -28,11 +28,11 @@ You now need to customise each datasource you want to cache. This will render th
 
 1. Include the `CacheableDatasource` class at the top of your data source:
 
-		require_once(EXTENSIONS . '/cacheabledbdatasource/lib/class.cacheabledbdatasource.php');
+		require_once(EXTENSIONS . '/advancedcacheabledatasource/lib/class.advancedcacheabledatasource.php');
 
-2. Change your data source class to extend `CacheableDBDatasource` instead of `Datasource`
+2. Change your data source class to extend `AdvancedCacheableDatasource` instead of `Datasource`
 
-		Class datasourcepage_articles extends CacheableDBDatasource {
+		Class datasourcepage_articles extends AdvancedCacheableDatasource {
 
 3. Set the cache timeout in minutes:
 
@@ -66,12 +66,12 @@ This allows mapping of url parameters to field names; and when these match on fi
 ## How do I purge the cache?
 Simply go into System menu and find Cacheable DB Datasource; from there you can select which datasource you want to purge the cache for.
 
-## Why are so many cache files created?
-Cache entries are never deleted, only overwritten when they have expired. It is normal to have many files generated for each data source since the filename is a hashed signature of all of its configuration properties and filters. This means that if you have pagination enabled, a cache file is generated for each page of results since each page creates a unique combination of filters.
+## Why are so many cache entries created?
+Cache entries are never deleted, only overwritten when they have expired. It is normal to have many entries generated for each data source since the filename is a hashed signature of all of its configuration properties and filters. This means that if you have pagination enabled, a cache entry is generated for each page of results since each page creates a unique combination of filters.
 
 It works this way to allow for very wide, rather than narrow, hierarchies. Say you have a site showcasing bands, 10,000 in total. Your Band page accepts an artist entry ID and filters the Bands section to show that single entry. For this wide sitemap, you would require each instance of the Band Profile datasource to be cached individually. Which it is :-)
 
 ## Changelog
 
-* 0.6, 2011-02-18
+* 0.6, 2011-11-29
 	* First public release of the extension that superseeds cacheabledatasource provided by Nick Dunn. Stores into database and adds some additional features.

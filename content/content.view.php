@@ -4,13 +4,13 @@
 	require_once(TOOLKIT . '/class.datasourcemanager.php');
 	require_once(TOOLKIT . '/class.datasource.php');
 
-	Class contentExtensionCacheabledbdatasourceView extends AdministrationPage{
+	Class contentExtensionAdvancedcacheabledatasourceView extends AdministrationPage{
 
 		protected $_cachefiles = array();
 
 		function __construct(&$parent){
 			parent::__construct($parent);
-			$this->setTitle(__('Symphony') .' &ndash; ' . __('Cacheable DB Data Sources'));
+			$this->setTitle(__('Symphony') .' &ndash; ' . __('Advanced Cacheable Datasources'));
 		}
 		
 		// This seems retarded, but it's effiecient
@@ -26,7 +26,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `sym_cacheabledbdatasource` group by 1");
+				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `tbl_advancedcacheabledatasource` group by 1");
 				
 				foreach($caches as $cache){
 					$this->_cachefiles[$cache['datasource']] = array(
@@ -48,7 +48,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_cacheabledbdatasource` where `datasource` = '{$datasource}'");
+				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_advancedcacheabledatasource` where `datasource` = '{$datasource}'");
 				$files = null;
 				foreach($caches as $cache){
 					if (!isset($files)) {
@@ -66,7 +66,7 @@
 			foreach ($handles as $handle) {
 				$files = $this->__getCacheFileList($handle);
 				if (isset($files)) {		
-					foreach($files as $file) {
+					/*foreach($files as $file) {
 						// unlink($file);
 						//symphony will automatically clear up expired cache after some time unless this is re-filled
 						//not deleting so if immediately updating symphony will only update instead of re-create row
@@ -74,10 +74,10 @@
 						
 						// just delete as we might have too many rows
 						Symphony::Database()->delete("tbl_cache","`hash`='{$file}'");
-						Symphony::Database()->delete("tbl_cacheabledbdatasource","`hash`='{$file}'");
+						Symphony::Database()->delete("tbl_advancedcacheabledatasource","`hash`='{$file}'");
 						// var_dump($file);
-					}
-					// Symphony::Database()->delete("tbl_cacheabledbdatasource","`datasource`='{$handle}'");
+					}*/
+					Symphony::Database()->delete("tbl_advancedcacheabledatasource","`datasource`='{$handle}'");
 				}					
 			}
 			// die;
@@ -86,7 +86,7 @@
 		function view(){
 			
 			$this->setPageType('table');
-			$this->appendSubheading(__('Cacheable DB Data Sources'));
+			$this->appendSubheading(__('Advanced Cacheable Datasources'));
 			
 			$aTableHead = array(
 				array('Data Source', 'col'),
@@ -132,7 +132,7 @@
 					
 			// var_dump ($ds['handle']);
 					// if data source is using Cacheable Datasource
-					if ($datasource instanceOf CacheableDBDatasource){
+					if ($datasource instanceOf AdvancedCacheableDatasource){
 						
 						$lifetime = Widget::TableData($datasource->dsParamCACHE . ' ' . ($datasource->dsParamCACHE == 1 ? __('minute') : __('minutes')));
 						

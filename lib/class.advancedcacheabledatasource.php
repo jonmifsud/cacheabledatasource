@@ -1,6 +1,6 @@
 <?php
 
-Class CacheableDBDatasource extends Datasource {
+Class AdvancedCacheableDatasource extends Datasource {
 	
 	var $minVersion = '0.2.3';
 	
@@ -78,8 +78,8 @@ Class CacheableDBDatasource extends Datasource {
 		// var_dump(serialize($this->dsParamFLUSH));die;
 		// var_dump($hash);die;
 		return serialize($this->dsParamFLUSH);
-		// $id = Symphony::Database()->fetchVar("id",0,"SELECT `id` FROM `tbl_cacheabledbdatasource` WHERE `hash` = '{$hash}'");
-		// Symphony::Database()->insert(array('id'=>$id,'datasource'=>substr (get_class($this),10),'hash'=>$hash,'size'=>$length, 'params'=>serialize($this->dsParamFLUSH), 'section'=>$this->getSource()), 'tbl_cacheabledbdatasource',true);
+		// $id = Symphony::Database()->fetchVar("id",0,"SELECT `id` FROM `tbl_advancedcacheabledatasource` WHERE `hash` = '{$hash}'");
+		// Symphony::Database()->insert(array('id'=>$id,'datasource'=>substr (get_class($this),10),'hash'=>$hash,'size'=>$length, 'params'=>serialize($this->dsParamFLUSH), 'section'=>$this->getSource()), 'tbl_advancedcacheabledatasource',true);
 	}
 	
 	private function buildCacheFilename(&$filename, &$file_age, &$row) {
@@ -108,7 +108,7 @@ Class CacheableDBDatasource extends Datasource {
 		
 		$hash = md5($filename);
 		
-		$row = Symphony::Database()->fetchRow(0,"SELECT `id`,`creation`,`expiry`,`data`,`hash` FROM `tbl_cacheabledbdatasource` WHERE `hash` = '{$hash}'");
+		$row = Symphony::Database()->fetchRow(0,"SELECT `id`,`creation`,`expiry`,`data`,`hash` FROM `tbl_advancedcacheabledatasource` WHERE `hash` = '{$hash}'");
 		$time = $row['creation'];
 		$expiry = $row["expiry"];
 		if ($row == NULL) $row= array('hash'=>$hash);
@@ -179,8 +179,8 @@ Class CacheableDBDatasource extends Datasource {
 	
 	public function grab(&$param_pool=array()) {
 		
-		$status = Symphony::ExtensionManager()->fetchStatus('cacheabledbdatasource');
-		$version = Symphony::ExtensionManager()->fetchInstalledVersion('cacheabledbdatasource');
+		$status = Symphony::ExtensionManager()->fetchStatus('advancedcacheabledatasource');
+		$version = Symphony::ExtensionManager()->fetchInstalledVersion('advancedacheabledatasource');
 		// var_dump(version_compare($version, $this->minVersion, '>=')  );die;
 		// Check that this DS has a cache time set
 		if ($status == EXTENSION_ENABLED && version_compare($version, $this->minVersion, '>=') && isset($this->dsParamCACHE) && is_numeric($this->dsParamCACHE) && $this->dsParamCACHE > -1) {
@@ -248,7 +248,7 @@ Class CacheableDBDatasource extends Datasource {
 				// Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'hash'=>$hash,'size'=>$length, 'params'=>serialize($this->dsParamFLUSH), 'section'=>$this->getSource()), 'tbl_cache',true);
 				try{
 					$paramData = $this->storeParams($param_pool);
-					Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'size'=>strlen($data),'uncompressedsize'=>$uncompressedsize, 'params'=>$paramData, 'section'=>$this->getSource()), 'tbl_cacheabledbdatasource',true);
+					Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'size'=>strlen($data),'uncompressedsize'=>$uncompressedsize, 'params'=>$paramData, 'section'=>$this->getSource()), 'tbl_advancedcacheabledatasource',true);
 					// echo 'inserted';die;
 				}catch (Exception $e) {
 					// var_dump(Symphony::Database()->getLastError());die;
