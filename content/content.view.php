@@ -4,7 +4,7 @@
 	require_once(TOOLKIT . '/class.datasourcemanager.php');
 	require_once(TOOLKIT . '/class.datasource.php');
 
-	Class contentExtensionAdvancedcacheabledatasourceView extends AdministrationPage{
+	Class contentExtensionDbdatasourcecacheView extends AdministrationPage{
 
 		protected $_cachefiles = array();
 

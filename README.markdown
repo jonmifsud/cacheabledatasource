@@ -1,4 +1,4 @@
-# Advanced Cacheable Datasource
+# DB Datasource Cache
 
 * Version: 0.6
 * Author: [Jonathan Mifsud](http://jonmifsud.com)
@@ -19,7 +19,7 @@ Some datasources simply execute a lot of database queries, and if you run a busy
 
 However sometimes neither of these are viable. Perhaps you really *need* all of that data in your XML, or perhaps you have a "Logged in as {user}" notice in the header that means you can't cache the HTML output for all users.
 
-This extension bundles a `AdvancedCacheableDatasource` class from which your data sources can extend.
+This extension bundles a `dbdatasourcecache` class from which your data sources can extend.
 
 ## How do I use it?
 Install this extension. Actual Installation/Update is required as cache does not activate unless latest version is installed.
@@ -28,11 +28,11 @@ You now need to customise each datasource you want to cache. This will render th
 
 1. Include the `CacheableDatasource` class at the top of your data source:
 
-		require_once(EXTENSIONS . '/advancedcacheabledatasource/lib/class.advancedcacheabledatasource.php');
+		require_once(EXTENSIONS . '/dbdatasourcecache/lib/class.dbdatasourcecache.php');
 
-2. Change your data source class to extend `AdvancedCacheableDatasource` instead of `Datasource`
+2. Change your data source class to extend `dbdatasourcecache` instead of `Datasource`
 
-		Class datasourcepage_articles extends AdvancedCacheableDatasource {
+		Class datasourcepage_articles extends dbdatasourcecache {
 
 3. Set the cache timeout in minutes:
 
