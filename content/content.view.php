@@ -26,7 +26,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `tbl_advancedcacheabledatasource` group by 1");
+				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `tbl_dbdatasourcecache` group by 1");
 				
 				foreach($caches as $cache){
 					$this->_cachefiles[$cache['datasource']] = array(
@@ -48,7 +48,7 @@
 			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
 			
 				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_advancedcacheabledatasource` where `datasource` = '{$datasource}'");
+				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_dbdatasourcecache` where `datasource` = '{$datasource}'");
 				$files = null;
 				foreach($caches as $cache){
 					if (!isset($files)) {
@@ -74,10 +74,10 @@
 						
 						// just delete as we might have too many rows
 						Symphony::Database()->delete("tbl_cache","`hash`='{$file}'");
-						Symphony::Database()->delete("tbl_advancedcacheabledatasource","`hash`='{$file}'");
+						Symphony::Database()->delete("tbl_dbdatasourcecache","`hash`='{$file}'");
 						// var_dump($file);
 					}*/
-					Symphony::Database()->delete("tbl_advancedcacheabledatasource","`datasource`='{$handle}'");
+					Symphony::Database()->delete("tbl_dbdatasourcecache","`datasource`='{$handle}'");
 				}					
 			}
 			// die;
@@ -132,7 +132,7 @@
 					
 			// var_dump ($ds['handle']);
 					// if data source is using Cacheable Datasource
-					if ($datasource instanceOf AdvancedCacheableDatasource){
+					if ($datasource instanceOf dbdatasourcecache){
 						
 						$lifetime = Widget::TableData($datasource->dsParamCACHE . ' ' . ($datasource->dsParamCACHE == 1 ? __('minute') : __('minutes')));
 						
