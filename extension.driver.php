@@ -49,7 +49,8 @@
 			foreach ($rows as $row){
 				$params = unserialize($row['params']);
 				//if no params flush everytime probably a list that has to be updated
-				if ($params == NULL) Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+				// if ($params == NULL) Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+				if ($params == NULL) Symphony::Database()->delete("tbl_dbdatasourcecache","`id`='{$row['id']}'");
 				else{
 					foreach ($params as $key => $parameter){
 					$parameters = explode(',',$parameter);
@@ -61,39 +62,18 @@
 									//get the handle of this entry to compare handle as well as value
 									$handle = $fielddata[str_replace('value','handle',$field)];
 									// var_dump($handle);
-									if($val == $param || $handle == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+									// if($val == $param || $handle == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+									if($val == $param || $handle == $param)	Symphony::Database()->delete("tbl_dbdatasourcecache","`id`='{$row['id']}'");
 								}
 							} else {
-								if($context['fields'][$key] == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+								// if($context['fields'][$key] == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
+								if($context['fields'][$key] == $param)	Symphony::Database()->delete("tbl_dbdatasourcecache","`id`='{$row['id']}'");
 							}
 							 // var_dump($context['fields']['menu-title']);die;
 						}
 					}
 				}
 			}
-			/*if ($context['section']->get('name')=='Posts'){
-				$id = $context['entry']->get('id');
-				foreach ($this->urls as $key => $url){
-					
-					// check if language has data
-					$var = 'value-'.$key;
-					if( $context['fields']["url-handle"][$var] != ''){
-						// language has data in post
-						$oldPing = Symphony::Database()->fetch("SELECT `ping_time` FROM `tbl_feedburner` WHERE `id` = '{$id}' AND `lang` = '{$key}'");
-						
-						if (count($oldPing)==0) {
-							// insert in db timestamp automatic
-							Symphony::Database()->insert(array('id'=>$id, 'lang'=>$key), 'tbl_feedburner');
-							// we can ping this language
-							$this->pingFeedburner($this->urls[$key]);
-						} else {
-							// this post was already pinged
-							
-							// do nothing unless we want to re-ping because of an update.
-						}
-					}
-				}
-			}*/
 		}
 		
 		/**
