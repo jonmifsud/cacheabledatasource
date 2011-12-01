@@ -2,7 +2,7 @@
 
 Class DBDatasourceCache extends Datasource {
 	
-	var $minVersion = '0.2.3';
+	var $minVersion = '0.6';
 	
 	/**
 	 * Given some data, this function will compress it using `gzcompress`
@@ -114,7 +114,7 @@ Class DBDatasourceCache extends Datasource {
 		if ($row == NULL) $row= array('hash'=>$hash);
 		
 		// var_dump($hash);
-		// Added by JCA 09/12/2010 - Manual FLUSH of cache
+		// Manual FLUSH of cache
 		if (isset($_GET['flush'])) {
 			return false;
 		}
@@ -188,14 +188,12 @@ Class DBDatasourceCache extends Datasource {
 			$row = null;
 			$file_age = 0;
 			if ($this->buildCacheFilename($filename, $file_age, $row)) {
-				// $this->storeParams($hash);
-				// var_dump('I am cached');die;
+				// Must be cached get from row
 				// HACK: peek at the first line of XML to see if it's a serialised array
 				// which contains cached output parameters
 				
-				// $xml = file_get_contents($filename);
-				$xml = $this->decompressData($row['data']);//Symphony::Database()->fetchVar("data",0,"SELECT `data`, `expiry` FROM `tbl_cache` WHERE `hash` = '{$hash}'");//use last query that's why i included data maybe it would be faster?
-				// var_dump($xml);die;
+				$xml = $this->decompressData($row['data']);
+				
 				// split XML into an array of each line
 				$xml_lines = explode("\n",$xml);
 				
@@ -220,7 +218,7 @@ Class DBDatasourceCache extends Datasource {
 				
 			} else {
 				// Backup the param pool, and see what's been added
-				// var_dump('I am not cached');die;
+				// If in here create fresh not cached
 				$tmp = array();
 												
 				// Fetch the contents
@@ -237,15 +235,11 @@ Class DBDatasourceCache extends Datasource {
 				
 				// Add an attribute to preg_replace later
 				$contents->setAttribute("cache-age", "fresh");
-				
-				// Write the cached XML to disk
-				// file_put_contents($filename, $output_params . $contents->generate(true, 1));
 				// $id = $row["id"];
 				// var_dump($row["id"] . ' ' . $row['hash']);die;
 				$data = $output_params . $contents->generate(true, 1);
 				$uncompressedsize = strlen($data);
 				$data = $this->compressData($data);
-				// Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'hash'=>$hash,'size'=>$length, 'params'=>serialize($this->dsParamFLUSH), 'section'=>$this->getSource()), 'tbl_cache',true);
 				try{
 					$paramData = $this->storeParams($param_pool);
 					Symphony::Database()->insert(array('id'=>$row["id"], 'hash'=>$row['hash'], 'creation'=>time(),'expiry'=>NULL, 'data'=>$data,'datasource'=>substr (get_class($this),10),'size'=>strlen($data),'uncompressedsize'=>$uncompressedsize, 'params'=>$paramData, 'section'=>$this->getSource()), 'tbl_dbdatasourcecache',true);

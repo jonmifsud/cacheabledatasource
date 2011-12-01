@@ -20,11 +20,7 @@
 		}
 		
 		// Build a list of all DS-cache files
-		private function __buildCacheFileList() {
-			// if ($this->_cachefiles != null) return $this->_cachefiles;
-			
-			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
-			
+		private function __buildCacheFileList() {			
 				// Check some initial characters
 				$caches = Symphony::Database()->fetch("SELECT `datasource`,sum(`size`) size_tot,sum(`uncompressedsize`) uncompressedsize_tot, count(`datasource`) as nb FROM `tbl_dbdatasourcecache` group by 1");
 				

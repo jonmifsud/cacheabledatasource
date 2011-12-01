@@ -4,7 +4,7 @@
 
 		public function about(){
 			return array('name' => 'DB Datasource Cache',
-						 'version' => '0.2.4',
+						 'version' => '0.6',
 						 'release-date' => '2011-11-29',
 						 'author' => array('name' => 'Jon Mifsud',
 										   'website' => 'http://jonmifsud.com'),
