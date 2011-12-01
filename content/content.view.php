@@ -41,46 +41,11 @@
       	  	return $this->_cachefiles;			
 		}
 		
-		// Build a list of all DS-cache files
-		private function __getCacheFileList($datasource) {
-			// if ($this->_cachefiles != null) return $this->_cachefiles;
-			
-			// if (!$oDirHandle = opendir(CACHE)) trigger_error("Panic! DS cache doesn't exists");
-			
-				// Check some initial characters
-				$caches = Symphony::Database()->fetch("SELECT `hash` FROM `tbl_dbdatasourcecache` where `datasource` = '{$datasource}'");
-				$files = null;
-				foreach($caches as $cache){
-					if (!isset($files)) {
-						$files = array($cache['hash']);
-					}
-					else {
-						array_push(	$files,$cache['hash']);
-					}			
-				}
-      	  	
-      	  	return $files;			
-		}
-		
+				
 		private function __clearCache($handles) {
 			foreach ($handles as $handle) {
-				$files = $this->__getCacheFileList($handle);
-				if (isset($files)) {		
-					/*foreach($files as $file) {
-						// unlink($file);
-						//symphony will automatically clear up expired cache after some time unless this is re-filled
-						//not deleting so if immediately updating symphony will only update instead of re-create row
-						// Symphony::Database()->update(array('expiry'=>time(),'data'=>''), "tbl_cache","`hash`='{$file}'");
-						
-						// just delete as we might have too many rows
-						Symphony::Database()->delete("tbl_cache","`hash`='{$file}'");
-						Symphony::Database()->delete("tbl_dbdatasourcecache","`hash`='{$file}'");
-						// var_dump($file);
-					}*/
-					Symphony::Database()->delete("tbl_dbdatasourcecache","`datasource`='{$handle}'");
-				}					
+				Symphony::Database()->delete("tbl_dbdatasourcecache","`datasource`='{$handle}'");			
 			}
-			// die;
 		}
 	
 		function view(){
