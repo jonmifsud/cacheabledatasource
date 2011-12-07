@@ -1,8 +1,8 @@
 # DB Datasource Cache
 
-* Version: 0.6
-* Author: [Jonathan Mifsud](http://jonmifsud.com)
-* Build Date: 2011-11-29
+* Version: 0.7
+* Authors: [Nick Dunn](http://nick-dunn.co.uk/), [Jonathan Mifsud](http://jonmifsud.com), [Giel Berkers](http://www.gielberkers.com)
+* Build Date: 2011-12-07
 * Requirements: Symphony 2.2
 
 Explorations from a forum discussion [Datasource Caching](http://symphony-cms.com/discuss/thread/32535/).
@@ -24,23 +24,7 @@ This extension bundles a `dbdatasourcecache` class from which your data sources 
 ## How do I use it?
 Install this extension. Actual Installation/Update is required as cache does not activate unless latest version is installed.
 
-You now need to customise each datasource you want to cache. This will render the DS un-editable through the Data Source Editor (Blueprints > Components) but it's a small price to pay. If you're technically advanced to be using this extension in the first place, I'm assuming you're comfortable editing data sources by hand anyway.
-
-1. Include the `CacheableDatasource` class at the top of your data source:
-
-		require_once(EXTENSIONS . '/dbdatasourcecache/lib/class.dbdatasourcecache.php');
-
-2. Change your data source class to extend `dbdatasourcecache` instead of `Datasource`
-
-		Class datasourcepage_articles extends dbdatasourcecache {
-
-3. Set the cache timeout in minutes:
-
-		public $dsParamCACHE = 0; //0 signifies unlimited time caching
-
-4. Remove the grab() function from your data source. If you want to go custom rename to grab_xml()
-
-5. Make the `allowEditorToParse()` function `return false` (or remove it altogether)
+Once installed, an option appears when editing datasources, allowing you to cache them by simple ticking a checkbox and setting a time limit.
 
 ## Refresh your frontend page
 View the `?debug` XML of your frontend page and you should see the cached XML and the age of the cache in seconds. The cached XML might jump to the top of the order in the XML source. This is normal, and is a by-product of how Symphony works out ordering on the fly.
@@ -61,6 +45,7 @@ The cache is meant to purge automatically for every entry that you update; howev
 		public $dsParamFLUSH = array(
 				'title' => 'handle',//where title is your field name and handle is the url parameter
 		);
+
 This allows mapping of url parameters to field names; and when these match on field update the entry is cleared. If you do not want to purge the cache you can insert an invalid value eg -1 instead of handle and this will never match
 		
 ## How do I purge the cache?
@@ -72,6 +57,9 @@ Cache entries are never deleted, only overwritten when they have expired. It is 
 It works this way to allow for very wide, rather than narrow, hierarchies. Say you have a site showcasing bands, 10,000 in total. Your Band page accepts an artist entry ID and filters the Bands section to show that single entry. For this wide sitemap, you would require each instance of the Band Profile datasource to be cached individually. Which it is :-)
 
 ## Changelog
+
+* 0.7, 2011-12-07
+    * Adds functionality to set the caching by using the backend instead of editing your datasources manually.
 
 * 0.6, 2011-11-29
 	* First public release of the extension that superseeds cacheabledatasource provided by Nick Dunn. Stores into database and adds some additional features.
