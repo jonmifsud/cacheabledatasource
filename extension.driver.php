@@ -4,12 +4,21 @@
 
 		public function about(){
 			return array('name' => 'DB Datasource Cache',
-						 'version' => '0.6',
-						 'release-date' => '2011-11-29',
-						 'author' => array('name' => 'Jon Mifsud',
-										   'website' => 'http://jonmifsud.com'),
-						'description' => 'Create custom Data Sources that implement output caching');
-
+                 'version' => '0.7',
+                 'release-date' => '2011-12-07',
+                 'author' => array(
+                     array(
+                         'name' => 'Nick Dunn',
+                         'website' => 'http://nick-dunn.co.uk'),
+                     array(
+                         'name' => 'Jonathan Mifsud',
+                         'website' => 'http://jonmifsud.com/'),
+                     array(
+                         'name' => 'Giel Berkers',
+                         'website' => 'http://www.gielberkers.com')
+                     ),
+                'description' => 'Implement caching for datasources'
+            );
 		}
 		
 		public function fetchNavigation(){			
@@ -36,9 +45,85 @@
 					'delegate' => 'EntryPostEdit',
 					'callback' => 'pageUpdate'
 				),
+                array(
+                    'page' => '/blueprints/datasources/',
+                    'delegate' => 'DatasourcePreEdit',
+                    'callback' => 'datasourceUpdate'
+                ),
+                array(
+                    'page' => '/blueprints/datasources/',
+                    'delegate' => 'DatasourcePreCreate',
+                    'callback' => 'datasourceUpdate'
+                ),
+                array(
+                    'page' => '/backend/',
+                    'delegate' => 'InitaliseAdminPageHead',
+                    'callback' => 'addScriptToHead'
+                )
 			);
 		}
-		
+
+        /**
+         * Update the physical datasource, thus editing the file so manual editing is no long needed.
+         * @param $context
+         * @return void
+         */
+        public function datasourceUpdate($context)
+        {
+            // Edit the datasource file if caching is enabled:
+            if(isset($_POST['dbdatasourcecache']) && isset($_POST['dbdatasourcecache']['cache']))
+            {
+                $cacheTime = intval($_POST['dbdatasourcecache']['time']);
+                $data = $context['contents'];
+
+                // Include aditional classes:
+                $data = preg_replace('/require_once\(TOOLKIT\s?+\.\s?+\'\/class.datasource.php\'\);/', 'require_once(TOOLKIT . \'/class.datasource.php\');
+            require_once(EXTENSIONS . \'/dbdatasourcecache/lib/class.dbdatasourcecache.php\');', $data);
+
+                // Adjust the class initilization and the caching time:
+                $data = preg_replace('/Class (.*) extends Datasource\s?+{/', 'Class \\1 extends dbdatasourcecache{
+
+                    public $dsParamCACHE = '.$cacheTime.';', $data);
+
+                // Rename the grab()-function to grab_xml():
+                $data = str_replace('public function grab(', 'public function grab_xml(', $data);
+
+                $context['contents'] = $data;
+            }
+        }
+
+        /**
+         * Add some JavaScript logic to the head to add the 'cache this datasource'-checkbox to the datasource editor page
+         * @param $context
+         * @return void
+         */
+        public function addScriptToHead($context)
+        {
+            $callback = Administration::instance()->getPageCallback();
+            if($callback['driver'] == 'blueprintsdatasources')
+            {
+                if($callback['context'][0] == 'edit')
+                {
+                    // Check whether this datasource is a cachable one or not:
+                    $ds = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_dbdatasourcecache` WHERE `datasource` = \''.$callback['context'][1].'\';');
+                    if($ds != false)
+                    {
+                        // Get the correct caching time:
+                        $content = file_get_contents(DATASOURCES.'/data.'.$callback['context'][1].'.php');
+                        preg_match('/public \$dsParamCACHE = (.*);/', $content, $match);
+                        $js = 'var cacheMinutes = '.$match[1].', cacheEnabled = true;';
+                    } else {
+                        $js = 'var cacheMinutes = 60, cacheEnabled = false;';
+                    }
+                } else {
+                    $js = 'var cacheMinutes = 60, cacheEnabled = false;';
+                }
+                $tag = new XMLElement('script', $js, array('type'=>'text/javascript'));
+			    $context['parent']->Page->addElementToHead($tag);
+                $context['parent']->Page->addScriptToHead(URL . '/extensions/dbdatasourcecache/assets/ui.js');
+            }
+        }
+
 		public function pageUpdate($context) {
 			//get section id
 			$sectionid = $context['section']->get('id');
