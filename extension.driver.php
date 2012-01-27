@@ -4,8 +4,8 @@
 
 		public function about(){
 			return array('name' => 'DB Datasource Cache',
-                 'version' => '0.7',
-                 'release-date' => '2011-12-07',
+                 'version' => '0.7.1',
+                 'release-date' => '2012-01-27',
                  'author' => array(
                      array(
                          'name' => 'Nick Dunn',
@@ -70,6 +70,8 @@
          */
         public function datasourceUpdate($context)
         {
+			//TODO Replace the check with a file check rather then db as this is not real check
+			
             // Edit the datasource file if caching is enabled:
             if(isset($_POST['dbdatasourcecache']) && isset($_POST['dbdatasourcecache']['cache']))
             {
@@ -126,60 +128,67 @@
 
 		public function pageUpdate($context) {
 			//get section id
+	// $current = precision_timer();
+			require_once(TOOLKIT . '/class.datasourcemanager.php');
+			require_once(TOOLKIT . '/class.datasource.php');
+	
 			$sectionid = $context['section']->get('id');
 			
-			//fetch all cache rows related to this section
-			$rows = Symphony::Database()->fetch("SELECT `id`,`params`,`datasource`,`hash` FROM `tbl_dbdatasourcecache` WHERE `section`='{$sectionid}'");
-			$fieldManager= new FieldManager(Symphony::Engine());
-			foreach ($rows as $row){
-				$params = unserialize($row['params']);
-				//if no params flush everytime probably a list that has to be updated
-				if ($params == NULL) Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
-				else{
-					foreach ($params as $key => $parameter){
-					$parameters = explode(',',$parameter);
-						foreach ($parameters as $param){
-							$fieldid = $fieldManager->fetchFieldIDFromElementName($key, $sectionid);
-							if (is_array($context['fields'][$key])){
-								$fielddata = $context['entry']->getData($fieldid);
-								foreach ($context['fields'][$key] as $field => $val){
-									//get the handle of this entry to compare handle as well as value
-									$handle = $fielddata[str_replace('value','handle',$field)];
-									// var_dump($handle);
-									if($val == $param || $handle == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
-								}
-							} else {
-								if($context['fields'][$key] == $param)	Symphony::Database()->update(array('expiry'=>time()), "tbl_cache","`hash`='{$row['hash']}'");
-							}
-							 // var_dump($context['fields']['menu-title']);die;
+			$languages = array('en');
+			if (Symphony::Configuration()->get('languages', 'language_redirect'))
+				$languages = explode(',', Symphony::Configuration()->get('languages', 'language_redirect') );
+			elseif (Symphony::Configuration()->get('language_codes', 'language_redirect'))
+				$languages = explode(',', Symphony::Configuration()->get('language_codes', 'language_redirect') );
+			
+			
+			$dsm = new DatasourceManager(Administration::instance());
+			$datasources = $dsm->listAll();	
+			$params = array();
+			foreach($datasources as $ds) {
+				try {
+					$datasource = $dsm->create($ds['handle'], $params);
+				} catch (Exception $e){
+					continue;
+				}
+				if ($datasource instanceOf DBDatasourceCache){
+					if ( $datasource->getSource() != $sectionid ) continue;
+					if ( !isset($datasource->dsParamFLUSH)) {
+						$params = serialize(NULL);
+						Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}' and `params`='{$params}'");
+						continue;
+					}
+					// var_dump($sectionid);die;
+					//build string
+					$flush = array();
+					foreach ($datasource->dsParamFLUSH as $key => $value){
+						foreach($languages as $language){
+							if ( is_array($context['fields'][$key])){
+								if ( $context['fields'][$key]['value-'.$language] )
+									$flush[$language][$key] = $context['fields'][$key]['value-'.$language];
+								elseif ( !isset( $context['fields'][$key]['value-'.$language]))
+									$flush[$language][$key] = $context['fields'][$key];
+							} else 
+								$flush[$language][$key] = $context['fields'][$key];
 						}
 					}
+					foreach ($flush as $langflush){
+						$params = serialize($langflush);
+						// $rows = Symphony::Database()->fetch("SELECT `id` FROM `tbl_dbdatasourcecache` WHERE `datasource`='{$ds['handle']}' and `params`='{$params}'");
+							
+						Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}' and `params`='{$params}'");
+						
+						// foreach($rows as $row){
+							// Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`id`='{$row['id']}'");
+						// }
+					}
+					// var_dump($flush);die;
 				}
 			}
-			/*if ($context['section']->get('name')=='Posts'){
-				$id = $context['entry']->get('id');
-				foreach ($this->urls as $key => $url){
-					
-					// check if language has data
-					$var = 'value-'.$key;
-					if( $context['fields']["url-handle"][$var] != ''){
-						// language has data in post
-						$oldPing = Symphony::Database()->fetch("SELECT `ping_time` FROM `tbl_feedburner` WHERE `id` = '{$id}' AND `lang` = '{$key}'");
-						
-						if (count($oldPing)==0) {
-							// insert in db timestamp automatic
-							Symphony::Database()->insert(array('id'=>$id, 'lang'=>$key), 'tbl_feedburner');
-							// we can ping this language
-							$this->pingFeedburner($this->urls[$key]);
-						} else {
-							// this post was already pinged
-							
-							// do nothing unless we want to re-ping because of an update.
-						}
-					}
-				}
-			}*/
+		
+		// var_dump($context);die;
+	// echo 'Elapsed time' . precision_timer('stop',$current).'<br/>';die;
 		}
+		
 		
 		/**
 		 * Installation
@@ -190,16 +199,17 @@
 				`id` INT(11) unsigned NOT NULL AUTO_INCREMENT,
 				`datasource` VARCHAR(100),
 				`section` INT(11) unsigned NOT NULL,
-				`size` INT(11) unsigned NOT NULL,
 				`uncompressedsize` INT(11) unsigned NOT NULL,
+				`size` INT(11) unsigned NOT NULL,
 				`params` VARCHAR(511),
 				`hash` VARCHAR(32) UNIQUE NOT NULL,
 				`creation` int(14) NOT NULL DEFAULT '0',
 				`expiry` int(14) unsigned DEFAULT NULL,
 				`data` longtext COLLATE utf8_unicode_ci NOT NULL,
 			PRIMARY KEY (`id`),
-			KEY `datasource` (`datasource`)
-			);");
+			KEY `datasource` (`datasource`),
+			FULLTEXT KEY `params` (`params`)
+			) ENGINE=MyISAM;");
 		}
 		
 		/**
@@ -210,9 +220,13 @@
 			$version = Symphony::ExtensionManager()->fetchInstalledVersion('dbdatasourcecache');
 			if (version_compare($version, '0.2.2', '<')){
 				Symphony::Database()->query("TRUNCATE TABLE `tbl_cache`");
-				Symphony::Database()->query("DROP TABLE `tbl_cachabledbdatasource`");
+				Symphony::Database()->query("DROP TABLE `tbl_dbdatasourcecache`");
+			} elseif (version_compare($version, '0.7.1', '<')){
+				Symphony::Database()->query("TRUNCATE TABLE `tbl_dbdatasourcecache`");
+				Symphony::Database()->query("ALTER TABLE  `tbl_dbdatasourcecache` ENGINE = MYISAM");
+				Symphony::Database()->query("ALTER TABLE  `tbl_dbdatasourcecache` ADD FULLTEXT (  `params` )");
 			} 
-			$this->uninstall(); 
+			// $this->uninstall(); 
 			Symphony::Database()->query("CREATE TABLE IF NOT EXISTS `tbl_dbdatasourcecache` (
 				`id` INT(11) unsigned NOT NULL AUTO_INCREMENT,
 				`datasource` VARCHAR(100),
@@ -225,8 +239,9 @@
 				`expiry` int(14) unsigned DEFAULT NULL,
 				`data` longtext COLLATE utf8_unicode_ci NOT NULL,
 			PRIMARY KEY (`id`),
-			KEY `datasource` (`datasource`)
-			);");
+			KEY `datasource` (`datasource`),
+			FULLTEXT KEY `params` (`params`)
+			) ENGINE=MyISAM;");
 			
 			// Symphony::Database()->query("ALTER TABLE  `sym_cacheabledbdatasource` ADD INDEX (`datasource`)");
 		}
