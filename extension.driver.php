@@ -143,9 +143,9 @@
 			
 			$dsm = new DatasourceManager(Administration::instance());
 			$datasources = $dsm->listAll();	
-			$params = array();
 			foreach($datasources as $ds) {
 				try {
+					$params = array();
 					$datasource = $dsm->create($ds['handle'], $params);
 				} catch (Exception $e){
 					continue;
@@ -153,35 +153,35 @@
 				if ($datasource instanceOf DBDatasourceCache){
 					if ( $datasource->getSource() != $sectionid ) continue;
 					if ( !isset($datasource->dsParamFLUSH)) {
-						$params = serialize(NULL);
-						Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}' and `params`='{$params}'");
-						continue;
-					}
-					// var_dump($sectionid);die;
-					//build string
-					$flush = array();
-					foreach ($datasource->dsParamFLUSH as $key => $value){
-						foreach($languages as $language){
-							if ( is_array($context['fields'][$key])){
-								if ( $context['fields'][$key]['value-'.$language] )
-									$flush[$language][$key] = $context['fields'][$key]['value-'.$language];
-								elseif ( !isset( $context['fields'][$key]['value-'.$language]))
-									$flush[$language][$key] = $context['fields'][$key];
-							} else 
-								$flush[$language][$key] = $context['fields'][$key];
-						}
-					}
-					foreach ($flush as $langflush){
-						$params = serialize($langflush);
-						// $rows = Symphony::Database()->fetch("SELECT `id` FROM `tbl_dbdatasourcecache` WHERE `datasource`='{$ds['handle']}' and `params`='{$params}'");
-							
-						Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}' and `params`='{$params}'");
+						Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}'");
 						
-						// foreach($rows as $row){
-							// Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`id`='{$row['id']}'");
-						// }
+					} else {
+						// var_dump($sectionid);die;
+						//build string
+						$flush = array();
+						foreach ($datasource->dsParamFLUSH as $key => $value){
+							foreach($languages as $language){
+								if ( is_array($context['fields'][$key])){
+									if ( $context['fields'][$key]['value-'.$language] )
+										$flush[$language][$key] = $context['fields'][$key]['value-'.$language];
+									elseif ( !isset( $context['fields'][$key]['value-'.$language]))
+										$flush[$language][$key] = $context['fields'][$key];
+								} else 
+									$flush[$language][$key] = $context['fields'][$key];
+							}
+						}
+						foreach ($flush as $langflush){
+							$params = serialize($langflush);
+							// $rows = Symphony::Database()->fetch("SELECT `id` FROM `tbl_dbdatasourcecache` WHERE `datasource`='{$ds['handle']}' and `params`='{$params}'");
+								
+							Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`datasource`='{$ds['handle']}' and `params`='{$params}'");
+							
+							// foreach($rows as $row){
+								// Symphony::Database()->update(array('expiry'=>time()), "tbl_dbdatasourcecache","`id`='{$row['id']}'");
+							// }
+						}
+						// var_dump($flush);die;
 					}
-					// var_dump($flush);die;
 				}
 			}
 		

@@ -51,7 +51,12 @@ Class DBDatasourceCache extends Datasource {
 						$arr2 = explode(':',$var);
 						if ($page->_param[$arr2[0]]!==NULL || $param_pool[$arr2[0]]!==NULL ){
 							if ($this->dsParamFLUSH[$key]!='') $this->dsParamFLUSH[$key] .= ',';
-							$this->dsParamFLUSH[$key].=$page->_param[$arr2[0]] . $param_pool[$arr2[0]];
+							//ds-param tends to be an array eg ids etc etc - in this case take first value from array.
+							$poolVar = $param_pool[$arr2[0]];
+							if (is_array($param_pool[$arr2[0]])){
+								$poolVar = $param_pool[$arr2[0]][0];
+							} 
+							$this->dsParamFLUSH[$key].=$page->_param[$arr2[0]] . $poolVar;
 							if ($group && $this->dsParamFLUSH[$key]!='') break;
 							// var_dump($page->_param[$arr2[0]]);
 						}
