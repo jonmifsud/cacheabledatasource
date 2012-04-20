@@ -160,16 +160,12 @@
 						//build string
 						$flush = array();
 						foreach ($datasource->dsParamFLUSH as $key => $value){
-							foreach($languages as $language){
-								if ( is_array($context['fields'][$key])){
-									if ( $context['fields'][$key]['value-'.$language] )
-										$flush[$language][$key] = $context['fields'][$key]['value-'.$language];
-									elseif ( !isset( $context['fields'][$key]['value-'.$language]))
-										$flush[$language][$key] = $context['fields'][$key];
-								} else 
-									$flush[$language][$key] = $context['fields'][$key];
-							}
+							$flush = array_merge($flush,$datasource->getFlushValue($key,$context,$languages));
 						}
+						
+						//make this unique - eg if non-language based stuff used in multilang env
+						$flush = array_unique ($flush);
+						
 						foreach ($flush as $langflush){
 							$params = serialize($langflush);
 							// $rows = Symphony::Database()->fetch("SELECT `id` FROM `tbl_dbdatasourcecache` WHERE `datasource`='{$ds['handle']}' and `params`='{$params}'");

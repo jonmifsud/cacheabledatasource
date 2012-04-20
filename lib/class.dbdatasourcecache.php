@@ -33,6 +33,23 @@ Class DBDatasourceCache extends Datasource {
 		return $data;
 	}
 	
+	/**
+	 * Generate a custom Flush array to be serialized.
+	 */
+	public function getFlushValue($key,$context,$languages){
+		$flush = array();
+		foreach($languages as $language){
+			if ( is_array($context['fields'][$key])){
+				if ( $context['fields'][$key]['value-'.$language] )
+					$flush[$language][$key] = $context['fields'][$key]['value-'.$language];
+				elseif ( !isset( $context['fields'][$key]['value-'.$language]))
+					if (!empty($context['fields'][$key])) $flush[$language][$key] = $context['fields'][$key];
+			} else 
+				if (!empty($context['fields'][$key])) $flush[$language][$key] = $context['fields'][$key];
+		}
+		return $flush;
+	}
+	
 	private function storeParams(&$param_pool=array()){
 		$page = Frontend::Page();
 				
@@ -73,6 +90,10 @@ Class DBDatasourceCache extends Datasource {
 						// $this->dsParamFLUSH[$key].=$page->_param[$var];
 						// break;
 					// }
+				}
+				if (empty($this->dsParamFLUSH[$key])) {
+					unset($this->dsParamFLUSH[$key]);
+					// var_dump($this->dsParamFLUSH);die;
 				}
 				// if ($key == 'id') {var_dump($this->dsParamFLUSH[$key]);die;}
 			}
