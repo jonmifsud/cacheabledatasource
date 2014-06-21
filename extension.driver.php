@@ -111,7 +111,13 @@
                         // Get the correct caching time:
                         $content = file_get_contents(DATASOURCES.'/data.'.$callback['context'][1].'.php');
                         preg_match('/public \$dsParamCACHE = (.*);/', $content, $match);
-                        $js = 'var cacheMinutes = '.$match[1].', cacheEnabled = true;';
+                        if(!empty($match[1]))
+                        {
+                            $js = 'var cacheMinutes = '.$match[1].', cacheEnabled = true;';
+                        } else {
+                            // No cache time found. The datasource was probably cached first, and then un-cached afterwards:
+                            $js = 'var cacheMinutes = 60, cacheEnabled = false;';
+                        }
                     } else {
                         $js = 'var cacheMinutes = 60, cacheEnabled = false;';
                     }
