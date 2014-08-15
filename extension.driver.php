@@ -1,6 +1,6 @@
 <?php
 
-	Class Extension_CacheableDatasource extends Extension {
+    Class Extension_CacheableDatasource extends Extension {
 
         protected $ttl = 3600;
         protected $cache;
@@ -20,7 +20,7 @@
             );
         }
 
-		public function addCachingOpportunity($context) {
+        public function addCachingOpportunity($context) {
             $current_cache = Symphony::Configuration()->get('cacheabledatasource', 'caching');
             $label = Widget::Label(__('Cacheable Datasource'));
 
@@ -113,4 +113,4 @@
             $about = $datasource->about();
             return Lang::createHandle($about['name']);
         }
-	}
+    }
