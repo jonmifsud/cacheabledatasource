@@ -108,20 +108,22 @@
             $output = $this->getCachedDSOutput($datasource, $param_pool);
 
             if (!$output) {
-                // Store the pool before the DS runs.
-                // Prevents the DS from ruining its own hash.
-                $output['param_pool'] = $param_pool;
+                // send a blank pool to the ds [should only add it's own into pool]
+                $output['param_pool'] = array();
 
                 $result = $datasource->grab($output['param_pool']);
                 $output['xml'] = is_object($result) ? $result->generate(true, 1) : $result;
+
                 // $output['xml'] = $result;
                 $this->cacheDSOutput(
                     serialize($output),
                     $datasource,
-                    $param_pool,
+                    $output['param_pool'],
                     $datasource->dsParamCache
                 );
             }
+
+            $output['param_pool'] = array_merge($param_pool,$output['param_pool']);
             
             $xmlOutput = is_object($result) ? $result : XMLElement::convertFromXMLString($datasource->dsParamROOTELEMENT,$output['xml']);
             // $xmlOutput = is_object($result) ? $result : $output['xml'];
