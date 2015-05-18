@@ -158,7 +158,7 @@
         }
 
         protected function getCachedDSOutput(Datasource $datasource, $param_pool) {
-            $hash = $this->getHash($datasource, $param_pool);
+            $hash = $this->getHash($datasource, $param_pool);            
             $cache = $this->cache->read($hash);
             // $cache = $this->cache->read($hash,$this->getCacheNamespace($datasource));
             if ($cache['expiry'] > time())
@@ -172,13 +172,28 @@
         }
 
         protected function getHash(Datasource $datasource, $param_pool) {
+            if (isset($datasource->hash)) {
+                //if already generated no need to regenerate (eg changing params)
+                return $datasource->hash;
+            }
+
             $name = $this->getDSHandle($datasource);
             $version = $this->getVersion($datasource);
 
-            $hash = sprintf("ds/%s/%s/%d", $name, md5(serialize($param_pool)), $version);
+            $params = array();
+
+            foreach (get_class_vars(get_class($datasource)) as $key => $value) {
+                if (substr($key, 0, 2) == 'ds') {
+                    $params[$key] = $datasource->{$key};
+                }
+            }
+
+            // $hash = sprintf("ds/%s/%s/%d", $name, md5(serialize($params)), $version);
 
             //temporary due to db limit
-            $hash = md5(serialize('ds' . $name . $param_pool));
+            $hash = md5('ds' . $name . serialize($params) . $version);
+
+            $datasource->hash = $hash;
 
             return $hash;
         }
