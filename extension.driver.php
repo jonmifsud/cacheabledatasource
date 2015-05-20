@@ -68,8 +68,9 @@
 
             //get all datasources where the source is the section id of the entry
             $datasources = DatasourceManager::listAll();
-            foreach ($datasources as $datasourceHandle => $datasource) {
-                if ($datasource['source'] == $sectionID){
+            foreach ($datasources as $datasource) {
+                if ($datasource['source'] = $sectionID){
+                    $datasourceHandle = Lang::createHandle($datasource['name']);
                     // purge cache for this datasource
                     $this->cache->delete(null,'ds-'.$datasourceHandle);
                     $this->cache->delete(null,'ds-'.$datasourceHandle.'-'.$entry->get('id'));
