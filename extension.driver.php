@@ -47,7 +47,7 @@
         
         public function entryPreDelete($context){
             // purge before delete as we will lose section context - might purge unnecessarily if something else blocks the entry from being deleted
-            $this->purgeCache(current(EntryManager::fetch($context['entry_id'])));
+            $this->purgeCache(current(EntryManager::fetch(current($context['entry_id']))));
         }
 
         public function entryPostEdit($context){
