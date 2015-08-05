@@ -94,6 +94,7 @@
         }
 
         public function dataSourcePreExecute(&$context) {
+             // return;
             if (!$this->cache) {
                 $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
             }
@@ -108,12 +109,12 @@
 
             $output = $this->getCachedDSOutput($datasource, $param_pool);
 
-            if (!$output) {
+            if (!$output || true) {
                 // send a blank pool to the ds [should only add it's own into pool]
                 $output['param_pool'] = array();
 
                 $result = $datasource->grab($output['param_pool']);
-                $output['xml'] = is_object($result) ? $result->generate(true, 1) : $result;
+                $output['xml'] = is_object($result) ? $result->generate(false) : $result;
 
                 // $output['xml'] = $result;
                 $this->cacheDSOutput(
