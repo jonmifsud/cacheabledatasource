@@ -109,7 +109,7 @@
 
             $output = $this->getCachedDSOutput($datasource, $param_pool);
 
-            if (!$output || true) {
+            if (!$output) {
                 // send a blank pool to the ds [should only add it's own into pool]
                 $output['param_pool'] = array();
 
