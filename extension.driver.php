@@ -125,10 +125,16 @@
                 );
             }
 
+            if (!isset($output['param_pool'])){
+                $output['param_pool'] = array();
+            }
+
             $output['param_pool'] = array_merge($param_pool,$output['param_pool']);
             
-            $xmlOutput = is_object($result) ? $result : XMLElement::convertFromXMLString($datasource->dsParamROOTELEMENT,$output['xml']);
-            // $xmlOutput = is_object($result) ? $result : $output['xml'];
+            if (!empty($output['xml'])){
+                $xmlOutput = is_object($result) ? $result : XMLElement::convertFromXMLString($datasource->dsParamROOTELEMENT,$output['xml']);
+                // $xmlOutput = is_object($result) ? $result : $output['xml'];
+            }
 
             $context['xml'] = $xmlOutput;
             $context['param_pool'] = $output['param_pool'];
