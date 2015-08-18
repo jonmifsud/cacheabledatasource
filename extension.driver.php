@@ -114,7 +114,10 @@
                 $output['param_pool'] = array();
 
                 $result = $datasource->grab($output['param_pool']);
-                $result->setAttribute('generated-at',date('c'));
+
+                if ( is_object($result) ){
+                    $result->setAttribute('generated-at',date('c'));
+                }
 
                 $output['xml'] = is_object($result) ? $result->generate(false) : $result;
 
