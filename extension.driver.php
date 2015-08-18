@@ -114,15 +114,26 @@
                 $output['param_pool'] = array();
 
                 $result = $datasource->grab($output['param_pool']);
+                $result->setAttribute('generated-at',date('c'));
+
                 $output['xml'] = is_object($result) ? $result->generate(false) : $result;
 
+                $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
+
+                if (!($cacheResult)){
+                    //having no results is pretty standard and we should cache a 'no result message' as this is not an unusual error
+                    $cacheResult = $result->getChildByName('error',0)->getValue() == "No records found.";
+                }
+
                 // $output['xml'] = $result;
-                $this->cacheDSOutput(
-                    serialize($output),
-                    $datasource,
-                    $output['param_pool'],
-                    $datasource->dsParamCache
-                );
+                if ($cacheResult){
+                    $this->cacheDSOutput(
+                        serialize($output),
+                        $datasource,
+                        $output['param_pool'],
+                        $datasource->dsParamCache
+                    );
+                }
             }
 
             if (!isset($output['param_pool'])){
