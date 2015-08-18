@@ -115,18 +115,19 @@
 
                 $result = $datasource->grab($output['param_pool']);
 
+                $cacheResult = false;
+
                 if ( is_object($result) ){
                     $result->setAttribute('generated-at',date('c'));
+                    $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
+
+                    if (!($cacheResult)){
+                        //having no results is pretty standard and we should cache a 'no result message' as this is not an unusual error
+                        $cacheResult = $result->getChildByName('error',0)->getValue() == "No records found.";
+                    }
                 }
 
                 $output['xml'] = is_object($result) ? $result->generate(false) : $result;
-
-                $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
-
-                if (!($cacheResult)){
-                    //having no results is pretty standard and we should cache a 'no result message' as this is not an unusual error
-                    $cacheResult = $result->getChildByName('error',0)->getValue() == "No records found.";
-                }
 
                 // $output['xml'] = $result;
                 if ($cacheResult){
