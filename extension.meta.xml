@@ -14,8 +14,16 @@
             <name github="nickdunn" symphony="nickdunn" twitter="nickdunn">Nick Dunn</name>
             <website>http://nick-dunn.co.uk</website>
         </author>
+        <author>
+            <name github="jonmifsud" symphony="gunglien" twitter="jonmifsud">Jon Mifsud</name>
+            <website>http://jonmifsud.com</website>
+        </author>
     </authors>
     <releases>
+        <release version="3.0.0" date="2015-08-21" min="2.4">
+            - Completely rewritten to work with cache providers
+            - Added support for clearing on Order Entries
+        </release>
         <release version="2.1.0" date="2014-06-16" min="2.4">
             - Added cache folder creation, if missing
         </release>

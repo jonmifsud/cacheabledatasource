@@ -32,6 +32,11 @@
                     'delegate' => 'EntryPostCreate',
                     'callback' => 'entryPostCreate'
                 ),
+                array(
+                    'page' => '/publish/',
+                    'delegate' => 'EntriesPostOrder',
+                    'callback' => 'entriesPostOrder'
+                ),
             );
         }
 
@@ -56,6 +61,12 @@
 
         public function entryPostCreate($context){
             $this->purgeCache($context['entry']);
+        }
+
+        public function entriesPostOrder($context){
+            //since all entries for ordering are within the same section taking the first one is sufficient
+            $entry = EntryManager::fetch(current($context['entry_id']));
+            $this->purgeCache(current($entry));
         }
 
         public function purgeCache($entry){
