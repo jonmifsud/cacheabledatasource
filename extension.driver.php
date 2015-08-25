@@ -13,6 +13,11 @@
                     'callback'  => 'dataSourcePreExecute'
                 ),
                 array(
+                    'page'      => '/frontend/',
+                    'delegate'  => 'AssociationOutputPostExecute',
+                    'callback'  => 'associationOutputPostExecute'
+                ),
+                array(
                     'page'      => '/system/preferences/',
                     'delegate'  => 'AddCachingOpportunity',
                     'callback'  => 'addCachingOpportunity'
@@ -155,6 +160,13 @@
                 $output['param_pool'] = array();
             }
 
+            $datasource->cachedPool = $output['param_pool'];
+
+            if ($output['association_output']){
+                //use flag so association output does not run
+                $datasource->addedAssociationOutput = true;
+            }
+
             $output['param_pool'] = array_merge($param_pool,$output['param_pool']);
             
             if (!empty($output['xml'])){
@@ -164,6 +176,42 @@
 
             $context['xml'] = $xmlOutput;
             $context['param_pool'] = $output['param_pool'];
+        }
+            
+        /*
+         * By caching the outputs after the association output has completed, 
+         * the param pool would be cleaned when cached so association output will not run any queries when loaded from cache
+         */ 
+        public function associationOutputPostExecute(&$context) {
+            
+            if (!$this->cache) {
+                $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
+            }
+
+            $xml = $context['xml'];
+
+            $param_pool = $context['param_pool'];
+            $datasource = $context['datasource'];
+
+            if (!$datasource->dsParamCache){
+                //no cache time specified so ignore
+                return;
+            }
+
+            $output = array('xml'=>is_object($xml) ? $xml->generate(false) : $xml);
+
+            //intersect the data of the cached and non cached pools. This will return only the keys which were not removed by the Association Output.
+            $output['param_pool'] = array_intersect_key($datasource->cachedPool, $param_pool);
+            $output['association_output'] = true;
+
+            // var_dump($output['param_pool']);die;
+
+            $this->cacheDSOutput(
+                serialize($output),
+                $datasource,
+                $datasource->cachedPool, //use the original pool for caching as otherwise cache might not match ?
+                $datasource->dsParamCache
+            );
         }
 
         protected function getVersion(Datasource $datasource) {
@@ -195,9 +243,11 @@
 
         protected function getCachedDSOutput(Datasource $datasource, $param_pool) {
             $hash = $this->getHash($datasource, $param_pool);            
-            $cache = $this->cache->read($hash);
-            // $cache = $this->cache->read($hash,$this->getCacheNamespace($datasource));
-            if ($cache['expiry'] > time())
+            // $cache = $this->cache->read($hash);
+            $cache = $this->cache->read($hash,$this->getCacheNamespace($datasource));
+            if (!is_array($cache)){
+                return unserialize($cache);                
+            } else if ($cache['expiry'] > time())
                 return unserialize($cache['data']);
             else return false;
         }
@@ -214,7 +264,7 @@
             }
 
             $name = $this->getDSHandle($datasource);
-            $version = $this->getVersion($datasource);
+            // $version = $this->getVersion($datasource);
 
             $params = array();
 

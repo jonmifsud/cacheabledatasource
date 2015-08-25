@@ -20,9 +20,10 @@
         </author>
     </authors>
     <releases>
-        <release version="3.0.0" date="2015-08-21" min="2.4">
+        <release version="3.0.0" date="2015-08-25" min="2.4">
             - Completely rewritten to work with cache providers
             - Added support for clearing on Order Entries
+            - Added driver to Cache Association Output
         </release>
         <release version="2.1.0" date="2014-06-16" min="2.4">
             - Added cache folder creation, if missing
