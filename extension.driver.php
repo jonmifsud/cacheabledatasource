@@ -82,7 +82,7 @@
 
             $sectionID = $entry->get('section_id');
 
-            //get all datasources where the source is the section id of the entry
+            //get all datasources check where the seciton is used and purge
             $datasources = DatasourceManager::listAll();
             foreach ($datasources as $datasource) {
                 if ($datasource['source'] = $sectionID){
@@ -90,6 +90,20 @@
                     // purge cache for this datasource
                     $this->cache->delete(null,'ds-'.$datasourceHandle);
                     $this->cache->delete(null,'ds-'.$datasourceHandle.'-'.$entry->get('id'));
+
+                    //continue no need to check for included associations
+                    continue;
+                }
+
+                foreach ($datasource->dsParamINCLUDEDASSOCIATIONS as $fieldname => $association) {
+                    if ($association['section_id'] == $sectionID){
+                        $datasourceHandle = Lang::createHandle($datasource['name']);
+                        // purge cache for this datasource
+                        $this->cache->delete(null,'ds-'.$datasourceHandle);
+
+                        // continue iteration of outer loop do not check any more included associations
+                        continue 2;
+                    }
                 }
             }
         }
