@@ -125,6 +125,10 @@
 
         public function dataSourcePreExecute(&$context) {
              // return;
+            if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
+                return;
+            }
+
             if (!$this->cache) {
                 $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
             }
@@ -137,6 +141,11 @@
                 return;
             }
 
+            if ($datasource->isForcedEmpty()){
+                //datasource should not run so don't bother
+                return;
+            }
+
             $output = $this->getCachedDSOutput($datasource, $param_pool);
 
             if (!$output) {
@@ -144,11 +153,13 @@
                 $output['param_pool'] = array();
 
                 $result = $datasource->grab($output['param_pool']);
+                if (is_object($result)){
+                    $result->setAttribute('status','stale');
+                }
 
                 $cacheResult = false;
 
                 if ( is_object($result) ){
-                    $result->setAttribute('generated-at',date('c'));
                     $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
 
                     if (!($cacheResult)){
@@ -197,12 +208,18 @@
          * the param pool would be cleaned when cached so association output will not run any queries when loaded from cache
          */ 
         public function associationOutputPostExecute(&$context) {
+            if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
+                return;
+            }
             
             if (!$this->cache) {
                 $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
             }
 
             $xml = $context['xml'];
+            if (is_object($xml)){
+                $xml->setAttribute('generated-at',date('c'));
+            }
 
             $param_pool = $context['param_pool'];
             $datasource = $context['datasource'];
@@ -217,8 +234,6 @@
             //intersect the data of the cached and non cached pools. This will return only the keys which were not removed by the Association Output.
             $output['param_pool'] = array_intersect_key($datasource->cachedPool, $param_pool);
             $output['association_output'] = true;
-
-            // var_dump($output['param_pool']);die;
 
             $this->cacheDSOutput(
                 serialize($output),
@@ -267,8 +282,15 @@
         }
 
         protected function cacheDSOutput($output, Datasource $datasource, $param_pool, $ttl = null) {
-            $hash = $this->getHash($datasource, $param_pool);
-            return $this->cache->write($hash, $output, $ttl,$this->getCacheNamespace($datasource));
+            try{
+                $hash = $this->getHash($datasource, $param_pool);
+                return $this->cache->write($hash, $output, $ttl,$this->getCacheNamespace($datasource));
+            }
+            catch (Exception $e) {
+                //log error whilst caching however continue with page load as ds should be rendered anyway
+                Symphony::Log()->writeToLog(__('Error whilst saving datasource cache for %s with hash %s.', array($datasource,$hash)), E_WARNING, true);
+                return false();
+            }
         }
 
         protected function getHash(Datasource $datasource, $param_pool) {
