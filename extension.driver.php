@@ -290,12 +290,12 @@
             else {*/
                 // if cache expired
 
-                phpinfo();die;
+                // phpinfo();die;
 
                 $lazy = true;
 
                 if (!function_exists("pcntl_fork")){
-                    die('no pcntl_fork');
+                    // die('no pcntl_fork');
                 }
 
                 //TODO if `lazy` or generating and expired return anyway but 
