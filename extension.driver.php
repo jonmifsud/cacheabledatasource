@@ -123,6 +123,46 @@
             $context['wrapper']->appendChild($label);
         }
 
+        public function generateDS(&$context, &$datasource) {
+            // send a blank pool to the ds [should only add it's own into pool]
+            $output['param_pool'] = array();
+
+            $result = $datasource->grab($output['param_pool']);
+
+            $cacheResult = false;
+
+            if ( is_object($result) ){
+                $result->setAttribute('generated-at',date('c'));
+                // cache with stale attribute
+                $result->setAttribute('status','stale');
+                $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
+
+                if (!($cacheResult)){
+                    //having no results is pretty standard and we should cache a 'no result message' as this is not an unusual error
+                    $cacheResult = $result->getChildByName('error',0)->getValue() == "No records found.";
+                }
+            }
+
+            // $output['xml'] = $result;
+            if ($cacheResult){
+                $this->cacheDSOutput(
+                    serialize($output),
+                    $datasource,
+                    $output['param_pool'],
+                    $datasource->dsParamCache
+                );
+            }
+
+            // this has just been generated so its fresh
+            if ( is_object($result) ){
+                $result->setAttribute('status','fresh');
+            }
+
+            $output['xml'] = is_object($result) ? $result->generate(false) : $result;
+
+            return $output;
+        }
+
         public function dataSourcePreExecute(&$context) {
              // return;
             if (!$this->cache) {
@@ -139,34 +179,15 @@
 
             $output = $this->getCachedDSOutput($datasource, $param_pool);
 
-            if (!$output) {
-                // send a blank pool to the ds [should only add it's own into pool]
-                $output['param_pool'] = array();
-
-                $result = $datasource->grab($output['param_pool']);
-
-                $cacheResult = false;
-
-                if ( is_object($result) ){
-                    $result->setAttribute('generated-at',date('c'));
-                    $cacheResult = sizeof($result->getChildrenByName('error')) == 0;
-
-                    if (!($cacheResult)){
-                        //having no results is pretty standard and we should cache a 'no result message' as this is not an unusual error
-                        $cacheResult = $result->getChildByName('error',0)->getValue() == "No records found.";
-                    }
-                }
-
-                $output['xml'] = is_object($result) ? $result->generate(false) : $result;
-
-                // $output['xml'] = $result;
-                if ($cacheResult){
-                    $this->cacheDSOutput(
-                        serialize($output),
-                        $datasource,
-                        $output['param_pool'],
-                        $datasource->dsParamCache
-                    );
+            if (!$output || $output === "child") {
+                $output = $this->generateDS($context, $datasource);
+                // die('test');
+                if ($output === "child"){
+                    // if this is a fork quit after caching
+                    Symphony::Log()->writeToLog('Child generated cache' , E_NOTICE, true);
+                    exit;
+                } else {
+                    Symphony::Log()->writeToLog('Parent entry' , E_NOTICE, true);
                 }
             }
 
@@ -259,11 +280,59 @@
             $hash = $this->getHash($datasource, $param_pool);            
             // $cache = $this->cache->read($hash);
             $cache = $this->cache->read($hash,$this->getCacheNamespace($datasource));
-            if (!is_array($cache)){
+
+            /*if (!is_array($cache)){
+                // legacy option without expiration date included
                 return unserialize($cache);                
             } else if ($cache['expiry'] > time())
+                // if cache not expired
                 return unserialize($cache['data']);
-            else return false;
+            else {*/
+                // if cache expired
+
+                phpinfo();die;
+
+                $lazy = true;
+
+                if (!function_exists("pcntl_fork")){
+                    die('no pcntl_fork');
+                }
+
+                //TODO if `lazy` or generating and expired return anyway but 
+                if ($lazy && !empty($cache['data']) && function_exists("pcntl_fork") ){
+
+                    try {
+
+                        $pid = pcntl_fork();
+
+                        switch($pid) {
+                            case -1:
+                                //"Could not fork!\n";
+                                die('not forking');
+                                return false;
+                                break;
+                            case 0:
+                                //"In child!\n";
+                                Symphony::Log()->writeToLog('Spawned Child ' , E_NOTICE, true);
+                                return "child";
+                                break;
+                            default:
+                                //"In parent!\n";
+                                var_dump($pid);
+                                return unserialize($cache['data']);
+                        }
+                        
+                        pcntl_wait($pid);die('complete');
+
+                    } catch (Exception $e) {
+                        Symphony::Log()->writeToLog('Error spawning pcntl_fork: ' . $e->getMessage() , E_ERROR, true);
+                        return false;
+                    }
+
+                } else { 
+                    return false;
+                }
+            // }
         }
 
         protected function cacheDSOutput($output, Datasource $datasource, $param_pool, $ttl = null) {
