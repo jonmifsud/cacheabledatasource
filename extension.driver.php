@@ -125,9 +125,9 @@
 
         public function dataSourcePreExecute(&$context) {
              // return;
-            if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
-                return;
-            }
+            // if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
+            //     return;
+            // }
 
             if (!$this->cache) {
                 $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
@@ -208,9 +208,9 @@
          * the param pool would be cleaned when cached so association output will not run any queries when loaded from cache
          */ 
         public function associationOutputPostExecute(&$context) {
-            if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
-                return;
-            }
+            // if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
+            //     return;
+            // }
             
             if (!$this->cache) {
                 $this->cache = Symphony::ExtensionManager()->getCacheProvider('cacheabledatasource');
