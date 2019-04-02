@@ -124,7 +124,7 @@
         }
 
         public function dataSourcePreExecute(&$context) {
-             // return;
+             return;
             // if (!(Symphony::Author() && Symphony::Author()->isDeveloper())){
             //     return;
             // }
